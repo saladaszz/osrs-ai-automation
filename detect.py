@@ -26,7 +26,7 @@ Usage - formats:
 """
 # python detect.py --source data/images/rat_goblin_test.png --weights 46classes.pt --img 640
 # python detect.py --source screen --weights 46classes.pt --img 640 --view-img
-# python detect.py --source screen --weights 46classes.pt --img 640 --view-img --attack --window 800 -click-threshold 0.8
+# python detect.py --source screen --weights 46classes.pt --img 640 --view-img --automate --window 800 -click-threshold 0.8
 import argparse
 import os
 import platform
@@ -51,8 +51,15 @@ from utils.general import (LOGGER, Profile, check_file, check_img_size, check_im
                            increment_path, non_max_suppression, print_args, scale_boxes, strip_optimizer, xyxy2xywh)
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
+ammoniteTryCount = 0
+def look(direction):
+    direction.lower()
+    pyautogui.click(928, 45, button='right')
+    time.sleep(2)
+    pyautogui.click('look ' + direction + '.png', duration=0.5)
 
-def click_object(box):
+def click_object(box,automate):
+    global ammoniteTryCount
     x = int(box[0])
     y = int(box[1])
     x2 = int(box[2])
@@ -60,9 +67,35 @@ def click_object(box):
     print('| x:', x, '| y:', y )
     d = random.uniform(0.01,0.05)
     #pyautogui.moveTo(round((x+x2)/2,0), round((y+y2)/2,0), duration=d) # center click
-    pyautogui.moveTo(round((x + x2) / 2, 0), round((y + (y*0.1)), 0), duration=d)  # 10% upper (head) click
-    d = random.uniform(0.01,0.05)
-    pyautogui.click(button='left', duration=d)
+    d2 = random.uniform(0.1, 0.2)
+    if automate == 'teaks':
+        notCutting = pyautogui.locateOnScreen('notCutting.png', confidence=0.8)
+        cutting = pyautogui.locateOnScreen('cutting.png', confidence=0.8)
+        teakPresent = pyautogui.locateOnScreen('teakLog.png', confidence=0.8)
+        if notCutting or (notCutting==None and cutting==None):
+            while teakPresent:
+                pyautogui.keyDown('shift')
+                pyautogui.click(teakPresent)
+                time.sleep(0.1)
+                pyautogui.keyUp('shift')
+                teakPresent = pyautogui.locateOnScreen('teakLog.png', confidence=0.8)
+            pyautogui.moveTo(round((x + x2) / 2, 0), round((y + (y * 0.1)), 0), duration=d)  # 10% upper (head) click
+            pyautogui.click(button='left', duration=d)
+    if automate == 'ammoniteCrabs':
+        attackingAmmonite = pyautogui.locateOnScreen('ammoniteCrabFlag.png', confidence=0.8)
+        if not attackingAmmonite:
+            pyautogui.moveTo(round((x + x2) / 2, 0), round((y + (y * 0.1)), 0), duration=d)  # 10% upper (head) click
+            pyautogui.click(button='left', duration=d)
+            time.sleep(2)
+            attackingAmmonite = pyautogui.locateOnScreen('ammoniteCrabFlag.png', confidence=0.8)
+            if not attackingAmmonite:
+                ammoniteTryCount +=1
+                print(ammoniteTryCount)
+                if ammoniteTryCount == 9:
+                    pyautogui.click(1270, 40, duration=0.6)
+                    time.sleep(15)
+                    pyautogui.click(1226, 173, duration=0.5)
+                    ammoniteTryCount = 0
 
 @smart_inference_mode()
 def run(
@@ -87,13 +120,13 @@ def run(
         project=ROOT / 'runs/detect',  # save results to project/name
         name='exp',  # save results to project/name
         exist_ok=False,  # existing project/name ok, do not increment
-        line_thickness=3,  # bounding box thickness (pixels)
+        line_thickness=1,  # bounding box thickness (pixels)
         hide_labels=False,  # hide labels
         hide_conf=False,  # hide confidences
         half=False,  # use FP16 half-precision inference
         dnn=False,  # use OpenCV DNN for ONNX inference
         vid_stride=1,  # video frame-rate stride
-        attack=False,
+        automate=False,
         window=0,
         click_threshold= 0.9,
 ):
@@ -191,8 +224,8 @@ def run(
                     if save_crop:
                         save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
                         cv2.imwrite(f'{txt_path}.jpg', imc)
-                if time.time() > time_clicked and float(conf) > click_threshold and attack:
-                    click_object(xyxy)
+                if time.time() > time_clicked and float(conf) > click_threshold and automate:
+                    click_object(xyxy, automate)
                     d = random.uniform(5,10)
                     time_clicked = time.time() + d
             # Stream results
@@ -273,7 +306,7 @@ def parse_opt():
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
     parser.add_argument('--vid-stride', type=int, default=1, help='video frame-rate stride')
-    parser.add_argument('--attack', action='store_true', help='use to click on objects detection with mouse')
+    parser.add_argument('--automate', type=str, help='use to click on objects detection with mouse')
     parser.add_argument('--window', default=0, type=int, help='use to adjust size of captured screenshots')
     parser.add_argument('--click-threshold', default=0.9, type=float, help='determine what confidence threshold to click on objects detected')
     opt = parser.parse_args()
