@@ -9,3 +9,5 @@ You need your own datasets, put them in a folder under the datasets folder. Chan
 There are small errors with it, like in main.py change the back slashes to forward slashes.
 
 That's it and enjoy your automation!
+
+Questions, comments, and concerns to saladasz@saladasz.tk.
