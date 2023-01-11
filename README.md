@@ -12,4 +12,4 @@ There are small errors with it, like in main.py change the back slashes to forwa
 
 That's it and enjoy your automation!
 
-Questions, comments, and concerns to saladasz@saladasz.tk.
+Questions, comments, and concerns to saladasz@mail.saladasz.tk.
